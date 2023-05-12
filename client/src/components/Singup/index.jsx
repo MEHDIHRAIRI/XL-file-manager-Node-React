@@ -23,7 +23,6 @@ const Signup = () => {
       const url = "http://localhost:5000/api/users";
       const { data: res } = await axios.post(url, data);
       navigate("/login");
-      console.log(res.message);
     } catch (error) {
       if (
         error.response &&

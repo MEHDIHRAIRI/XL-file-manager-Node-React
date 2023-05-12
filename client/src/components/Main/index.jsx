@@ -14,7 +14,6 @@ const Main = () => {
 
   const fileChange = (e) => {
     var fileName = e.target.files[0].name;
-    console.log(fileName);
   };
   return (
     <div className={styles.main_container}>

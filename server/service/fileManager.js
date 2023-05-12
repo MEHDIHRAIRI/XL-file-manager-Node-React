@@ -6,8 +6,6 @@ const linkFileToUser = async (userId, fileName) => {
     fileName: fileName,
     filePath: filePath,
   };
-  console.log("userId: ", userId);
-  console.log("file: ", file);
 
   const updatedFileName = await User.findByIdAndUpdate(userId, { file: file });
   if (!updatedFileName) throw BadRequestError;
