@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
-export function connectToDatabase() {
+module.exports = () => {
   return mongoose
     .connect(
       "mongodb+srv://mehdihrairi:cn7r2IG0r6duUHCI@cluster0.vwlyatg.mongodb.net/?retryWrites=true&w=majority"
@@ -9,4 +9,4 @@ export function connectToDatabase() {
     .catch((error) => {
       console.error("connectToDatabase Error =>", error);
     });
-}
+};
