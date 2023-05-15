@@ -1,5 +1,6 @@
 import { useEffect, useState, forwardRef } from "react";
 import styles from "./styles.module.css";
+
 import { addFile } from "../../service/fileService";
 import MaterialTable from "material-table";
 import {
@@ -19,6 +20,7 @@ import {
   ArrowDownward,
   AddBox,
 } from "@material-ui/icons";
+import axios from "axios";
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -48,40 +50,46 @@ const columns = [
   {
     title: "ID",
     field: "ID",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "IDT",
     field: "IDT",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "Teneur_de_compte",
     field: "Teneur_de_compte",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "Nom",
     field: "Nom",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "Prenom",
     field: "Prenom",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "Ref",
     field: "Ref",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
+    render: (rowData) => {
+      if (!rowData.validRef) {
+        return <div style={{ color: "red" }}>{rowData.Ref}</div>;
+      }
+      return <div>{rowData.Ref}</div>;
+    },
   },
   {
     title: "RNE",
     field: "RNE",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validRNE) {
-        return <div style={{ background: "red" }}>{rowData.RNE}</div>;
+        return <div style={{ color: "red" }}>{rowData.RNE}</div>;
       }
       return <div>{rowData.RNE}</div>;
     },
@@ -89,15 +97,15 @@ const columns = [
   {
     title: "CMF",
     field: "CMF",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
   },
   {
     title: "CIN",
     field: "CIN",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validCIN) {
-        return <div style={{ background: "red" }}>{rowData.CIN}</div>;
+        return <div style={{ color: "red" }}>{rowData.CIN}</div>;
       }
       return <div>{rowData.CIN}</div>;
     },
@@ -106,12 +114,10 @@ const columns = [
     title: "Date_de_naissance",
     field: "Date_de_naissance",
     type: "date",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validateDateDeNaissance) {
-        return (
-          <div style={{ background: "red" }}>{rowData.Date_de_naissance}</div>
-        );
+        return <div style={{ color: "red" }}>{rowData.Date_de_naissance}</div>;
       }
       return <div>{rowData.Date_de_naissance}</div>;
     },
@@ -119,10 +125,10 @@ const columns = [
   {
     title: "Qte",
     field: "Qte",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validQte) {
-        return <div style={{ background: "red" }}>{rowData.Qte}</div>;
+        return <div style={{ color: "red" }}>{rowData.Qte}</div>;
       }
       return <div>{rowData.Qte}</div>;
     },
@@ -130,10 +136,10 @@ const columns = [
   {
     title: "Categorie",
     field: "Categorie",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validCategorie) {
-        return <div style={{ background: "red" }}>{rowData.Categorie}</div>;
+        return <div style={{ color: "red" }}>{rowData.Categorie}</div>;
       }
       return <div>{rowData.Categorie}</div>;
     },
@@ -141,12 +147,10 @@ const columns = [
   {
     title: "Institutionnel",
     field: "Institutionnel",
-    emptyValue: () => <em>N/A</em>,
+    emptyValue: () => <em style={{ color: "red" }}>N/A</em>,
     render: (rowData) => {
       if (!rowData.validInstitutionnel) {
-        return (
-          <div style={{ background: "red" }}>{rowData.Institutionnel}</div>
-        );
+        return <div style={{ color: "red" }}>{rowData.Institutionnel}</div>;
       }
       return <div>{rowData.Institutionnel}</div>;
     },
@@ -157,7 +161,7 @@ const Main = () => {
   const [fileName, setFileName] = useState("");
   const [user, setUser] = useState({});
   const [token, setToken] = useState("");
-  const [data, setdata] = useState([]);
+  const [data, setData] = useState([]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -174,9 +178,42 @@ const Main = () => {
   };
   const handleSubmit = async () => {
     const fileAdded = await addFile(fileName, token);
-    setdata(fileAdded.data.file.fileData);
-    console.log(fileAdded.data.file.fileData);
+    setData(fileAdded.data.file.fileData);
   };
+
+  const handleRowUpdate = async (newData, oldData) => {
+    let dataUpdate = [...data];
+    const index = oldData.ID;
+    dataUpdate.map((ligne) => {
+      if (ligne.ID === index) {
+        ligne.CIN = newData.CIN;
+        ligne.CMF = newData.CMF;
+        ligne.Date_de_naissance = newData.Date_de_naissance;
+        ligne.IDT = newData.IDT;
+        ligne.Institutionnel = newData.Institutionnel;
+        ligne.Nom = newData.Nom;
+        ligne.Prenom = newData.Prenom;
+        ligne.Qte = newData.Qte;
+        ligne.RNE = newData.RNE;
+        ligne.Ref = newData.Ref;
+        ligne.Teneur_de_compte = newData.Teneur_de_compte;
+        ligne.Categorie = newData.Categorie;
+      }
+    });
+    const token = localStorage.getItem("token");
+    // Save changes to database
+    axios
+      .put(
+        "http://localhost:5000/api/managFile/update",
+        { data: dataUpdate, fileName },
+        {
+          headers: { authorization: `Bearer ${token}` },
+        }
+      )
+      .then((response) => setData(response.data))
+      .catch((error) => console.error(error));
+  };
+
   return (
     <div className={styles.main_container}>
       <nav className={styles.navbar}>
@@ -188,17 +225,29 @@ const Main = () => {
         </button>
       </nav>
       <div>
-        <b>Import Excel File:</b>
         <div>
-          <input
-            type="file"
-            className="fileSelect"
-            onChange={(e) => fileChange(e)}
-          />
-          <button onClick={handleSubmit}>Submit file</button>
+          <div className={styles.selectDiv}>
+            <div>
+              <b>Import Excel File:</b>
+              <input
+                type="file"
+                className={styles.fileSelect} // add CSS class for styling
+                onChange={(e) => fileChange(e)}
+              />
+              <button
+                className={styles.submitButton} // add CSS class for styling
+                onClick={handleSubmit}
+              >
+                Submit file
+              </button>
+            </div>
+          </div>
           <MaterialTable
+            editable={{
+              onRowUpdate: handleRowUpdate,
+            }}
             data={data}
-            title="Tasks List"
+            title="Bourse de la tunisie"
             columns={columns}
             icons={tableIcons}
           />
